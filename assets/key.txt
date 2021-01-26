@@ -1,0 +1,4 @@
+keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore | openssl sha1 -binary | openssl base64
+3ZLW/TAqPvR43Zh79ejFQDOdka8=
+keytool -exportcert -alias YOUR_RELEASE_KEY_ALIAS -keystore YOUR_RELEASE_KEY_PATH | openssl sha1 -binary | openssl base64
+eKJJHinr+D3pnrXYFuIJnPbO7ag=
