@@ -13,144 +13,187 @@ class _HomeState extends State<Home> {
   final TextEditingController _cPlaca = TextEditingController();
   final TextEditingController _cRenavan = TextEditingController();
   final SalveData userDate = new SalveData();
+  //final _formKey = GlobalKey<FormState>();
+
+  bool isLoading = false;
 
   _isLogin() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     if (prefs.getString("_token") != '' || prefs.getString("_email") != '') {
-      print(prefs.getString("_token") + " - " + prefs.getString("_email"));
-      userDate.setLogin();
     } else
       userDate.setLogout();
+  }
 
-    //int counter = (prefs.getInt('counter') ?? 0) + 1;
-    //print('Pressed $counter times.');
-    //await prefs.setInt('counter', counter);
+  _isGetPaca() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (prefs.getString("_placa").isNotEmpty) {
+      _cPlaca.text = prefs.getString("_placa");
+      _cRenavan.text = prefs.getString("_renavan");
+    }
+    setState(() {
+      this.isLoading = false;
+    });
+  }
+
+  _setPlacaRenavan(String placa, String renavan) async {
+    //print(placa);
+    //print(renavan);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    prefs.setString("_placa", placa);
+    prefs.setString("_renavan", renavan);
   }
 
   @override
   Widget build(BuildContext context) {
-    _isLogin();
-    ;
-    return new Scaffold(
-      /*appBar: new AppBar(
-        title: new Text('Pague Multas'),
-      ),*/
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            colorFilter: new ColorFilter.mode(
-              Colors.black.withOpacity(0.1),
-              BlendMode.dstATop,
-            ),
-            image: AssetImage("assets/images/placa.png"),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(height: 100),
-            _logo(),
-            Text('Pague Multas'),
-            SizedBox(height: 60),
-            new Container(
-              margin: const EdgeInsets.fromLTRB(120, 5, 120, 0),
-              child: new DropdownButtonFormField<String>(
-                onChanged: popupButtonSelected,
-                decoration: new InputDecoration(
-                  fillColor: Colors.white,
-                  border: new OutlineInputBorder(
-                    borderRadius: new BorderRadius.circular(25.0),
-                    borderSide: new BorderSide(),
-                  ),
-                  //fillColor: Colors.green
+    //_isGetPaca();
+    return (this.isLoading)
+        ? new Scaffold(
+            body: new Stack(
+              children: [
+                new Opacity(
+                  opacity: 0.3,
+                  child: ModalBarrier(dismissible: false, color: Colors.grey),
                 ),
-                value: "1",
-                style: new TextStyle(
-                  fontSize: 15.0,
-                  color: const Color(0xFF202020),
-                  fontWeight: FontWeight.w200,
-                  fontFamily: "Roboto",
+                new Center(
+                  child: new CircularProgressIndicator(),
                 ),
-                items: [
-                  DropdownMenuItem(
-                    value: "1",
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        //Icon(Icons.build),
-                        SizedBox(width: 10),
-                        Text(
-                          "DETRAN-GO",
-                        ),
-                      ],
-                    ),
+                Center(
+                  child: Container(
+                    margin: EdgeInsets.only(left: 7),
+                    child: Text("Carregando dados..."),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            Column(
-              children: <Widget>[
-                _entryFieldPlaca("Placa", 'Informe Placa do veiculo', _cPlaca),
-                _entryField("Renavan", 'Informe Renavan', _cRenavan),
+                )
               ],
             ),
-            SizedBox(height: 10),
-            //_submitButton(),
-            InkWell(
-              onTap: () {
-                print(userDate.getIsLogado());
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Consulta(new DadosVeiculo(
-                          idDetran: '1',
-                          placa: _cPlaca.text,
-                          renavan: _cRenavan.text,
-                          ufDetran: 'GO'))),
-                );
-              },
-              child: new Container(
-                width: MediaQuery.of(context).size.width - 100,
-                padding: EdgeInsets.symmetric(vertical: 15),
-                alignment: Alignment.center,
+          )
+        : Scaffold(
+            /*appBar: new AppBar(
+        title: new Text('Pague Multas'),
+      ),*/
+            body: SingleChildScrollView(
+              child: Container(
+                height: MediaQuery.of(context).size.height,
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(5)),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                          color: Colors.grey.shade200,
-                          offset: Offset(2, 4),
-                          blurRadius: 5,
-                          spreadRadius: 2)
-                    ],
-                    gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [Color(0xff00cc44), Color(0xff009933)])),
-                child: Text(
-                  'Consulta Gratis',
-                  style: TextStyle(fontSize: 20, color: Colors.black),
+                  image: DecorationImage(
+                    colorFilter: new ColorFilter.mode(
+                      Colors.black.withOpacity(0.1),
+                      BlendMode.dstATop,
+                    ),
+                    image: AssetImage("assets/images/placa.png"),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    SizedBox(height: 20),
+                    _logo(),
+                    Text('Pague Multas'),
+
+                    _ComboBoxDetran(),
+                    Column(
+                      children: <Widget>[
+                        _entryFieldPlaca("Placa", 'Placa', _cPlaca),
+                        _entryField("Renavan", 'Renavan', _cRenavan)
+                      ],
+                    ),
+                    //Expanded(child: SizedBox(height: 10)),
+                    //_submitButton(),
+                    _ConultaGratis(context),
+                    SizedBox(height: 20),
+                  ],
                 ),
               ),
             ),
-            /* _submitButton(
-                context,
-                new DadosVeiculo(
-                    idDetran: '1',
-                    placa: _cPlaca.text,
-                    renavan: _cRenavan.text,
-                    ufDetran: 'GO')),*/
-          ],
-        ),
-      ),
-    );
+          );
   }
+}
 
+Widget _ConultaGratis(BuildContext context) {
+  return new InkWell(
+    onTap: () {
+      //if (_formKey.currentState.validate()) {
+      //_setPlacaRenavan(_cPlaca.text, _cRenavan.text);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => Consulta(new DadosVeiculo(
+                idDetran: '1',
+                placa: '', //Widget._cPlaca.text,
+                renavan: '', //_cRenavan.text,
+                ufDetran: 'GO'))),
+      );
+      //}
+    },
+    child: new Container(
+      width: MediaQuery.of(context).size.width - 150,
+      padding: EdgeInsets.symmetric(vertical: 15),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(5)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+                color: Colors.grey.shade200,
+                offset: Offset(2, 4),
+                blurRadius: 5,
+                spreadRadius: 2)
+          ],
+          gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Color(0xff00cc44), Color(0xff009933)])),
+      child: Text(
+        'Consulta Gratis',
+        style: TextStyle(fontSize: 20, color: Colors.white),
+      ),
+    ),
+  );
+}
+
+Widget _ComboBoxDetran() {
   void popupButtonSelected(String value) {}
+  return new Container(
+    margin: const EdgeInsets.fromLTRB(100, 5, 120, 0),
+    child: new DropdownButtonFormField<String>(
+      onChanged: popupButtonSelected,
+      decoration: new InputDecoration(
+        fillColor: Colors.white,
+        border: new OutlineInputBorder(
+          borderRadius: new BorderRadius.circular(25.0),
+          borderSide: new BorderSide(),
+        ),
+        //fillColor: Colors.green
+      ),
+      value: "1",
+      style: new TextStyle(
+        fontSize: 15.0,
+        color: const Color(0xFF202020),
+        fontWeight: FontWeight.w200,
+        fontFamily: "Roboto",
+      ),
+      items: [
+        DropdownMenuItem(
+          value: "1",
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              //Icon(Icons.build),
+              SizedBox(width: 10),
+              Text(
+                "DETRAN-GO",
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 Widget _logo() {
@@ -164,10 +207,8 @@ Widget _logo() {
 }
 
 Widget _submitButton(BuildContext context, DadosVeiculo dados) {
-  //print(dados.getPlaca());
   return InkWell(
     onTap: () {
-      //print(Widget.userDate.getIsLogado());
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => Consulta(dados)),
@@ -192,7 +233,7 @@ Widget _submitButton(BuildContext context, DadosVeiculo dados) {
               colors: [Color(0xff00cc44), Color(0xff009933)])),
       child: Text(
         'Consulta Gratis',
-        style: TextStyle(fontSize: 20, color: Colors.black),
+        style: TextStyle(fontSize: 20, color: Colors.white),
       ),
     ),
   );
@@ -214,9 +255,10 @@ Widget _entryField(String title, String hint, TextEditingController controler,
           height: 10,
         ),
         TextFormField(
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) {
               if (value.isEmpty || value.length < 10) {
-                return 'Informe a RENAVAN do veiculo com 10 caracteres';
+                return 'Informe RENAVAN com 10 caracteres';
               }
               return null;
             },
@@ -226,10 +268,10 @@ Widget _entryField(String title, String hint, TextEditingController controler,
                 border: InputBorder.none,
                 fillColor: Color(0xfff3f3f4),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black, width: 5.0),
+                  borderSide: BorderSide(color: Colors.black54, width: 5.0),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black, width: 5.0),
+                  borderSide: BorderSide(color: Colors.black54, width: 5.0),
                 ),
                 hintText: hint,
                 filled: true))
@@ -255,10 +297,11 @@ Widget _entryFieldPlaca(
           height: 10,
         ),
         TextFormField(
-          style: TextStyle(fontSize: 35.0),
+          style: TextStyle(fontSize: 15.0),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: (value) {
             if (value.isEmpty || value.length < 7) {
-              return 'Informe a placa do veiculo completa';
+              return 'Informe placa com 7 caracteres';
             }
             return null;
           },
@@ -268,10 +311,10 @@ Widget _entryFieldPlaca(
             border: InputBorder.none,
             fillColor: Color(0xfff3f3f4),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 5.0),
+              borderSide: BorderSide(color: Colors.black54, width: 5.0),
             ),
             enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 5.0),
+              borderSide: BorderSide(color: Colors.black54, width: 5.0),
             ),
             hintText: hint,
             filled: true,

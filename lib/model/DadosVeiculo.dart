@@ -25,4 +25,12 @@ class DadosVeiculo {
   String getPlaca() {
     return this.placa;
   }
+
+  String getRenavan() {
+    return this.renavan;
+  }
+
+  String getUf() {
+    return this.ufDetran;
+  }
 }

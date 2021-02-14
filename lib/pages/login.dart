@@ -1,17 +1,26 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:page_multas/model/WebServiceJson.dart';
+import 'package:page_multas/model/DadosVeiculo.dart';
 import 'package:page_multas/model/config.dart';
 import 'package:page_multas/model/usuario.dart';
-import 'package:page_multas/pages/cadastro.dart';
+
+import 'package:page_multas/model/Sigin.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:http/http.dart' as http;
+import 'package:page_multas/pages/cadastro.dart';
+import 'package:page_multas/pages/consulta.dart';
+import 'package:page_multas/pages/home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+
 import 'dart:convert' as JSON;
 
 import 'custom_dialog_box.dart';
 
 final facebookLogin = FacebookLogin();
+SalveData myData = new SalveData();
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key key, this.title}) : super(key: key);
@@ -22,20 +31,76 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
+Future _setDataLogin(String token, String email, String usuario) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  prefs.setString("_token", token);
+  prefs.setString("_email", email);
+  prefs.setString("_Usuario", usuario);
+
+  myData.setLogin(token, email, usuario);
+}
+
 Future<Usuario> LogarUsuario(
     BuildContext context, String email, String senha) async {
+  Dio dio = new Dio(options);
+
+  showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(child: CircularProgressIndicator());
+      });
+  try {
+    Response resp = await dio.post('/account/signin',
+        data: jsonEncode(<String, String>{
+          'username': email,
+          'password': senha,
+        }));
+
+    //print(">>>>>>>" + resp.statusCode.toString());
+    if (resp.statusCode == 200) {
+      Signin userLogin = Signin.fromJson(resp.data);
+
+      _setDataLogin(userLogin.getToken(), email, "Usuario");
+      Navigator.of(context).pop();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Consulta(new DadosVeiculo()),
+        ),
+      );
+    } else {
+      Navigator.of(context).pop();
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CustomDialogBox(
+              title: "Pague Multas Informa",
+              descriptions: "Usuario ou Senha ivalido!",
+              text: "Fechar",
+            );
+          });
+    }
+  } on DioError catch (err) {
+    Navigator.of(context).pop();
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CustomDialogBox(
+            title: "Pague Multas Informa",
+            descriptions: "Usuario ou Senha ivalido!", // + err.message,
+            text: "Fechar",
+          );
+        });
+  }
+  /*
   final http.Response response = await http.post(
     urlBase + 'account/signin',
     //port: 8080,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
-    body: jsonEncode(
-      <String, String>{
-        'username': email,
-        'password': senha,
-      },
-    ),
+    body: jsonEncode(),
   );
 
   if (response.statusCode == 200) {
@@ -70,13 +135,16 @@ Future<Usuario> LogarUsuario(
         });
     throw Exception('Failed: ' + response.body);
   }
+  */
 }
 
 class _LoginPageState extends State<LoginPage> {
-  bool isLoggedIn = false;
+  //bool isLoggedIn = false;
+
   final TextEditingController _cEmail = TextEditingController();
   final TextEditingController _cSenha = TextEditingController();
   Future<Usuario> _futureLogin;
+  ProgressDialog pr;
 
   Widget _backButton() {
     return InkWell(
@@ -98,21 +166,22 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
+/*
   void onLoginStatusChanged(bool isLoggedIn) {
     setState(() {
       this.isLoggedIn = isLoggedIn;
     });
   }
+  */
 
   void initiateFacebookLogin() async {
     var facebookLogin = FacebookLogin();
     var result = await facebookLogin.logIn(['email']);
 
-    print("*****->" +
-        result.toString() +
-        " -**- " +
-        FacebookLoginStatus.loggedIn.toString());
+    //print("*****->" +
+    //    result.toString() +
+    //    " -**- " +
+    //    FacebookLoginStatus.loggedIn.toString());
     switch (result.status) {
       case FacebookLoginStatus.loggedIn:
         var graphResponse = await http.get(
@@ -142,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
             context: context,
             builder: (BuildContext context) {
               return CustomDialogBox(
-                title: "Paguem Multas Informa",
+                title: "Pague Multas Informa",
                 descriptions: "Erro ao efetuar login com facebook ",
                 text: "Fechar",
               );
@@ -195,9 +264,29 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _submitButton() {
+    pr = new ProgressDialog(context);
+    pr.style(
+        message: 'Aguarde...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600));
     return InkWell(
       onTap: () {
-        _futureLogin = LogarUsuario(context, _cEmail.text, _cSenha.text);
+        //pr.show();
+        _futureLogin =
+            LogarUsuario(context, _cEmail.text, _cSenha.text); //.then(
+        //(value) {
+        //  pr.hide();
+        //},
+        //);
       },
       child: new Container(
         width: MediaQuery.of(context).size.width,
@@ -215,7 +304,7 @@ class _LoginPageState extends State<LoginPage> {
             gradient: LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
-                colors: [Color(0xfffbb448), Color(0xfff7892b)])),
+                colors: [Color(0xff00cc44), Color(0xff009933)])),
         child: Text(
           'Login',
           style: TextStyle(fontSize: 20, color: Colors.white),

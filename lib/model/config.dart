@@ -1,12 +1,25 @@
-const String urlBase = "http://192.168.0.105:8080/";
+import 'package:dio/dio.dart';
+
+const String urlBase = "http://systs:8080/";
+
+// or new Dio with a BaseOptions instance.
+BaseOptions options = new BaseOptions(
+  baseUrl: "http://192.168.43.118:8080/",
+  connectTimeout: 5000,
+  receiveTimeout: 3000,
+);
 
 class SalveData {
   bool isLogado = false;
   String email = "";
   String nome = "";
   String token = "";
-  setLogin() {
+
+  setLogin(String token, String email, String nome) {
     this.isLogado = true;
+    this.nome = nome;
+    this.email = email;
+    this.token = token;
   }
 
   setLogout() {
@@ -15,6 +28,10 @@ class SalveData {
 
   bool getIsLogado() {
     return this.isLogado;
+  }
+
+  setIsLogado() {
+    this.isLogado = true;
   }
   //SharedPreferences prefs = null;
   /*
